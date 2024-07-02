@@ -35,10 +35,13 @@ def generate_ngrams(words, n):
     """
     Generates n-grams from the list of words.
     """
-    ngrams = ['_'.join(words[i:i+n]).lower() for i in range(len(words)-n+1)]
+    ngrams = []
+    for i in range(len(words) - n + 1):
+        ngram = '_'.join(words[i:i+n]).lower()
+        ngrams.append(ngram)
     return ngrams
 
-def load_wordnet_data(index_file, data_file):
+def wordnet_data(index_file, data_file):
     """
     Loads WordNet index and data files into dictionaries.
     """
@@ -84,30 +87,40 @@ data_file = 'NounsData.txt'
 test_files_folder = 'S24 test_files'
 
 # Load WordNet data
-index_dict, data_dict = load_wordnet_data(index_file, data_file)
+index_dict, data_dict = wordnet_data(index_file, data_file)
 
 # List available test files
-test_files = sorted(os.listdir(test_files_folder))
+test_files = os.listdir(test_files_folder)
+test_files.sort()
+
 print("Available test files:")
-for i, test_file in enumerate(test_files, start=1):
-    print(f"{i}. {test_file}")
+for index, test_file in enumerate(test_files, start=1):
+    print(f"{index}. {test_file}")
 
 # Prompt user to select a file to process
-file_choice = int(input("\nSelect a file to process by entering the corresponding number: ")) - 1
+file_choice = int(input("\nEnter the number of the file you want to process: ")) - 1
 selected_file = test_files[file_choice]
 file_path = os.path.join(test_files_folder, selected_file)
-
-print(f"\nProcessing {selected_file}:\n")
 
 # Read the input text
 input_text = read_file(file_path)
 
 # Tokenize sentences and words
 sentences = tokenize_sentences(input_text)
-words_in_sentences = [tokenize_words(sentence) for sentence in sentences]
+words_in_sentences = []
+for sentence in sentences:
+    words = tokenize_words(sentence)
+    words_in_sentences.append(words)
+
 
 # Generate n-grams
-ngrams = {n: [generate_ngrams(words, n) for words in words_in_sentences] for n in range(2, 5)}
+ngrams = {}
+for n in range(2, 5):
+    ngram_lists = []
+    for words in words_in_sentences:
+        ngram_lists.append(generate_ngrams(words, n))
+    ngrams[n] = ngram_lists
+
 
 # Look up definitions for n-grams
 definitions = {n: [[lookup_definition(ngram, index_dict, data_dict) for ngram in ngram_list] for ngram_list in ngrams[n]] for n in ngrams}
@@ -115,6 +128,8 @@ definitions = {n: [[lookup_definition(ngram, index_dict, data_dict) for ngram in
 # Print the n-grams with their definitions
 for n in range(2, 5):
     print(f"\n{n}-grams:")
-    for ngram_list, def_list in zip(ngrams[n], definitions[n]):
-        for ngram, definition in zip(ngram_list, def_list):
+    for i in range(len(ngrams[n])):
+        for j in range(len(ngrams[n][i])):
+            ngram = ngrams[n][i][j]
+            definition = definitions[n][i][j]
             print(f"{ngram} {definition if definition else ''}")
